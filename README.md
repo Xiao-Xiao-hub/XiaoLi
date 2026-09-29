@@ -1,198 +1,176 @@
-# 小狸 · XiaoLi
+# XiaoLi
 
 <p align="center">
-  <img src="src/assets/mochi-app-icon.png" width="128" height="128" alt="小狸图标：紫灰发、狐猫面具与环形呆毛" />
+  <img src="src/assets/mochi-app-icon.png" width="128" height="128" alt="XiaoLi mascot with purple-gray hair, a fox-cat mask, and looped ahoge" />
 </p>
 
-<p align="center">一个小巧、可拖动的 Codex 证据监视器，也是用于会话历史与中转站黑盒审计的本地工作台。</p>
+<p align="center">A compact Codex evidence monitor plus a local workbench for conversation history and black-box relay audits.</p>
 
-> 当前版本：`v0.2.0-beta.1`。这是独立社区项目，与 OpenAI、Anthropic 没有隶属关系，也不代表任何模型或中转服务商的官方背书。本项目仍是 beta 阶段的黑盒与本地统计工具，不能保证结果准确无误。
+> Current release: `v0.2.0-beta.1`. XiaoLi is an independent community project. It is not affiliated with or endorsed by OpenAI, Anthropic, or any model or relay provider. It is a beta-stage black-box and local-statistics tool and cannot guarantee error-free results.
 
-[English](README.en.md) · [下载便携版](https://github.com/XuYing1128/XiaoLi/releases) · [工作台指南](docs/WORKBENCH.md) · [中转审计方法](docs/RELAY_AUDIT.md) · [签名静态基线](docs/SIGNED_BASELINES.md) · [社区参考基线](docs/COMMUNITY_BASELINES.md) · [状态与证据详解](docs/STATUS_AND_EVIDENCE.md)
+[Overview](README.md) · [Portable downloads](https://github.com/Xiao-Xiao-hub/XiaoLi/releases) · [Workbench guide](docs/WORKBENCH.md) · [Relay-audit method](docs/RELAY_AUDIT.md) · [Signed static baselines](docs/SIGNED_BASELINES.md) · [Community references](docs/COMMUNITY_BASELINES.en.md) · [Evidence reference](docs/STATUS_AND_EVIDENCE.md)
 
-## 小狸解决什么问题
+## What XiaoLi can verify
 
-Codex 界面显示的是你选择的模型和思考档位，但开发者还会关心：本回合到底请求了什么、切换是否已生效、是否收到服务器重路由通知、消耗了多少 Token、缓存输入占比多少、响应是否明显偏离本机历史。
+- The model and effort requested when the active Codex turn started.
+- A model or effort selected during an active turn as a pending next-turn setting.
+- An explicit server route only when a `model/rerouted` event was observed.
+- Structured token usage, cached-input share, context share, reasoning output, elapsed time, an estimated active TTFT window, and exact terminal timing when reported.
+- The configured connection origin, using explicit provider, sanitized endpoint class, and authentication-mode evidence.
+- Conservative behavioral or relay-audit deviations without pretending that behavior identifies a physical model.
 
-当使用中途出现风控、降质、计量异常或路由变化时，小狸希望尽早把可复核的信号和限制告诉你，避免继续消耗额度后才发现结果不符合预期。
+XiaoLi does not proxy Codex traffic, intercept or modify conversations, store message bodies, patch the Codex shell, or silently reuse Codex OAuth/API credentials.
 
-小狸只读结构化 rollout、官方插件 hook 和本地派生缓存，把这些证据分开显示：
+## The five-page local workbench
 
-- `Sol · ultra（请求）`：本回合实际发起时的请求配置。
-- `下一回合 Sol（待生效）`：活动回合中修改后的设置，不会冒充本回合值。
-- `Sol → 5.5（服务器已重路由）`：只来自明确的 `model/rerouted` 事件。
-- `未见服务器重路由`：没有捕获明确 reroute；不等于物理模型已经被认证。
-- Token、缓存输入占比、上下文占比、推理输出、活动耗时、TTFT 区间和两种观测速率。
-- 保守的黄色“疑似降质”：只和本机同配置历史比较，不会伪造服务器模型结论。
+Open **XiaoLi Workbench** from the tray or compact-window menu:
 
-小狸不会代理 Codex 网络、拦截请求、修改会话正文或注入 Codex 外壳。
+- **Overview** — active conversations, deduplicated token totals, origin classes, four audit axes, and recent alerts.
+- **Conversation history** — filter derived metrics by date, model, effort, origin, and status. Prompt and response bodies are not retained.
+- **Relay audit** — enter an endpoint you are authorized to test, select OpenAI Responses, OpenAI Chat Completions, or Anthropic Messages, test connectivity, review hard budgets, and explicitly start an audit.
+- **References** — inspect imported official/community/user material. Plain or unverified summaries remain metadata-only. A user may explicitly import an independent Ed25519 trust anchor and then verify a package whose signature covers all applicability parameters and normalized cell distributions. A verified, matching, unexpired package is only a low-confidence static fingerprint reference when no live pair exists; it cannot by itself make the overall verdict consistent or prove a physical model. Only a live official endpoint paired with the same protocol and exact model in the current audit provides medium/high-confidence statistical reference evidence.
+- **Method and status** — an in-app explanation of the four evidence axes, green/yellow/red/gray states, and what each conclusion cannot prove.
 
-## v0.2 的本地工作台
+The workbench is a normal, non-topmost window and is separate from the small always-on-top monitor. Active audits have their own worker and never share the Codex collector's refresh lock.
 
-从托盘或小窗菜单打开“小狸工作台”，会看到五个固定页面：
+## Four independent relay-audit axes
 
-- **总览**：活动会话、去重 Token、来源分类和最近异常。
-- **会话历史**：按日期、模型、effort、来源和状态筛选本地派生指标；不保存 prompt 或回复正文。
-- **中转检测**：填写自己有权测试的 endpoint、协议、声称模型与 API Key，先做连接测试，再明确确认预算后开始审计。
-- **参考资料**：展示官方/社区/用户导入参考的模型、协议、样本数与时效。普通或未验证摘要只作本地元数据；用户可显式导入独立 Ed25519 信任锚，再验证签名覆盖完整参数与规范化分布的静态包。已验证、参数匹配且未过期的包只能作为无实时配对时的低置信指纹参考，不能单独把总裁决设为正常或证明物理模型。只有本次审计中实时调用的同协议、同精确模型官方配对端点，才能作为中/高置信度统计参考。
-- **检测原理**：展示四条审计证据轴、绿/黄/红/灰状态和每种结论的能力边界。
+XiaoLi deliberately does not produce a misleading “96% real model” score.
 
-工作台是普通、非置顶窗口，与小型监视窗分开；深度审计也不会共用 Codex 采集器的刷新锁。详见 [工作台使用指南](docs/WORKBENCH.md)。
-
-## 中转审计的四条证据轴
-
-小狸不计算误导性的“96% 真模型”总分，而是把结果拆成四条独立证据：
-
-| 证据轴 | 会检查什么 | 不能证明什么 |
+| Axis | What it checks | What it cannot prove |
 | --- | --- | --- |
-| 协议兼容 | 认证、响应包络、SSE 终止、自报模型和错误契约 | 协议正常不代表后端就是声称的物理模型 |
-| 计量一致性 | usage 算术、缓存子集、多输入量级；启用时与实时官方配对比较 | 服务端隐藏 system prompt、reasoning 或包装可能让本地绝对计数不可得 |
-| 行为质量 | 结构化 JSON、长上下文 nonce、算术/约束推理、多语言、真实工具 schema 与同请求多消息状态保持 | 工具只评分受限的结构化函数名/字符串参数，绝不执行或保留原始响应正文；状态保持不是跨网络会话证明，文风、速度或单题也不能单独定性降质 |
-| 模型身份 | API 自报型号；启用实时官方配对时比较单 Token 分布与统计距离；未实时配对时，用户明确选择的已验签、参数匹配且未过期静态包可提供低置信比较 | 没有实时官方配对且未选择适用签名静态包时，该轴才必须是证据不足；静态“与参考一致”不能单独令总裁决正常，也不是物理模型证书 |
+| Protocol compatibility | Authentication, response envelope, SSE termination, self-reported model, and error-contract behavior | A correct API surface does not authenticate the physical backend |
+| Usage consistency | Usage arithmetic, subset invariants, controlled input sizes, and matched paired references when available | Hidden system prompts, reasoning, or provider wrappers can make a local absolute count unknowable |
+| Behavioral quality | Structured JSON, long-context nonce retrieval, arithmetic/constraints, multilingual tasks, real tool schemas, and same-request multi-message state retention | Tool checks score only allowlisted structured function names/string arguments, never execute calls, and do not retain raw response bodies; state retention is not proof across network sessions, and style, speed, or one task cannot establish degradation |
+| Model identity | The API-reported model name; with live official pairing, single-token distributions and statistical distance; without a live pair, an explicitly selected verified/matching/unexpired signed package can provide a low-confidence static comparison | Neither a fingerprint, a package signature, nor a reported name is a physical-model certificate; a static-consistent result cannot by itself make the overall verdict consistent |
 
-支持 OpenAI Responses、OpenAI Chat Completions 和 Anthropic Messages。详细统计门槛、抗规避设计与限制见 [中转审计方法](docs/RELAY_AUDIT.md)。
+Even a fully passing report says only: **no significant anomaly was found within this run's scope and reference conditions; the physical serving model was not cryptographically proven.**
 
-## 状态展示说明
+## Status display
 
-颜色不是唯一提示。窗口、托盘和键盘可访问文本会同时显示图形与说明。
+Color is never the only signal. The windows and tray pair every color with a symbol, text, tooltip, and accessible name.
 
-| 图形与状态 | 颜色 | 什么时候出现 | 它真正表示什么 | 你该怎么做 |
-| --- | --- | --- | --- | --- |
-| `✓ 正常` | 绿 | 请求模型和请求 effort 与任务生效设置一致，采集字段完整 | 请求配置一致、采集健康；**不表示服务器物理模型已独立认证** | 通常无需处理；仍可查看路由徽标 |
-| `! 待确认` | 黄 | 下一回合设置待生效、字段缺失或解析警告 | 请求或采集证据暂时不完整，具体原因会写在状态说明中 | 展开对应会话查看原因 |
-| `≈ 疑似降质` | 黄 | 至少两个独立行为信号连续偏离本机同配置历史 | 统计行为异常；**不能据此断言实际变成 5.5 或 effort 被降低** | 点击展开查看观测值、中位数、MAD、样本量与限制 |
-| `× 异常` | 红 | 同一回合 hook 与 rollout 明确冲突、显式重路由违反策略，或采集器确定性故障 | 已有明确冲突或采集无法继续 | 展开证据并按错误说明排查 |
-| `– 空闲` | 灰 | Codex 未运行或没有活动回合 | 小狸正在静默等待 | 启动 Codex 或开始新回合 |
-| `↝ 服务器已重路由` | 蓝紫徽标；冲突时红 | 捕获明确 `model/rerouted` | 这是小狸能够获得的最高等级服务器路由证据 | 查看完整路由链和事件时间 |
-| `! 已重路由，目标未知` | 黄徽标 | 捕获到明确 reroute，但事件没有可显示的目标模型 | 只确认发生过服务器重路由；不能猜测目标 | 保留事件时间并等待后续明确证据 |
-| `◇ 未见服务器重路由` | 灰徽标 | 没有捕获明确 reroute | 只表示“未观察到”，**不证明没有发生物理路由变化** | 结合请求证据使用，不要当作服务器认证 |
-| `⌁ 连接来源` | 绿/黄/灰徽标 | provider、endpoint 类别和认证模式形成完整、部分或冲突证据 | 只分类官方、自定义、本地、托管或未知连接配置；不证明后端模型 | 悬停查看 `configured / partial / unknown` 证据与限制 |
-| `◷ 下一回合待生效` | 蓝 | 活动回合中切换模型或 effort | 本回合继续使用原请求值，新值从下一回合开始 | 开启下一回合后确认活动请求更新 |
-| `◌ 学习中 X/30` | 中性 | 同桶完整健康样本少于 30 个 | 行为基线尚不足，不进行降质判断；它本身不会把主状态变黄 | 正常使用，等待样本积累 |
-| `✓ 行为一致` | 中性/绿点 | 已有足够基线且当前指标未达到保守异常阈值 | 只表示相对本机历史一致，不是模型认证 | 无需处理 |
-| `● 采集正常 / 警告 / 待确认 / 故障 / 未运行或未知` | 绿/黄/红/灰徽标 | 采集器健康、解析警告、字段不完整、确定性故障，或 Codex/采集状态尚不可用 | 只描述采集链路；解析警告不会抹掉仍可解析的证据 | 查看徽标 Tooltip 与具体原因 |
-| `… 等待首段 / 等待输出 / 等待模型片段` | 中性 | 尚无足够的结构化 item 或输出 Token 计算对应指标 | 是指标等待态，不会用 `0` 冒充，也不单独表示异常 | 等待本回合继续产生结构化事件 |
-| `↻ 刷新中 / 已合并 / 超时 / 失败` | 中性/黄色提示 | 手动刷新在后台扫描、与已有刷新合并、15 秒内未返回，或后台命令明确失败 | 这是交互状态，不是服务器模型结论；超时或失败均保留上一份有效快照，失败会显示精简原因 | 可继续操作；按原因排查后重试刷新 |
-| `● 审计与参考一致` | 绿 | 本次参数和样本范围内未见显著异常 | 只是与参考一致，**不代表物理模型已获证明** | 保留报告参数和限制，不要把绿色当身份证书 |
-| `! 疑似注水 / 疑似降质 / 显著偏离` | 黄 | 多尺度计量或多能力域/分布指标越过保守门槛 | 是可复核的统计嫌疑，不是“偷 Token”或“已换 5.5”的实锤 | 展开四轴原因、样本数、实时参考参数和置信区间 |
-| `! 抗规避行为异常` | 黄 | 标准/深度档中，回答分布坍缩、异常低且低方差延迟、语义改写偏移、角色/格式敏感中至少两类信号在两个批次都越过门槛 | 独立行为警告；不改写四轴、总裁决或模型身份 | 展开报告查看每批次观测值、官方参考、绝对/差值门槛与限制 |
-| `! 疑似选择性服务` | 黄 | 主动审计一致，但同 profile 最近 30 天至少 10 个真实完成回合中，至少 5 个且过半仍保留降质警告 | 主动与真实使用的统计矛盾；不改写四轴，不证明选择性路由 | 打开报告的“真实会话对照”查看样本、占比与限制 |
-| `× 契约矛盾` | 红 | 可复现的不可能 usage 算术、错误自报型号或稳定缺少已声明协议能力 | 证明当前契约有明确矛盾，但仍不自动推导后端实体 | 用相同参数复测并联系服务商 |
-| `× 检测失败` | 红 | 没有得到任何可解析成功响应，或后台审计发生确定性失败 | 这次运行没有形成可用结论，不是后端模型身份结论 | 查看脱敏错误类别后复测 |
-| `– 已取消` | 灰 | 用户取消；新的请求已停止启动 | 已完成的结构化证据可保留，但整次审计不作通过结论 | 需要时以新的预算重新运行 |
-| `– 证据不足` | 灰 | 样本不足、没有适用参考、参数不可控或检查不支持 | 没有足够证据得出绿/黄/红结论 | 选择匹配的实时官方配对；仅需低置信身份比较时，也可选择适用的已验签静态包；不要把灰色解读成通过 |
+### Codex monitor states
 
-下面两张图都由应用自己的合成数据页面生成，不含真实任务、用户路径或会话 ID：
+| Display | Meaning | Important limit |
+| --- | --- | --- |
+| `✓ Normal` (green) | Active request model and effort match effective task settings; collection is healthy | Green does not independently authenticate the physical server model |
+| `! Needs confirmation` (yellow) | A next-turn change is pending, fields are missing, or parsing is partial | Open the conversation for the exact reason |
+| `≈ Suspected degradation` (yellow) | At least two independent signals repeatedly deviate from a local same-configuration baseline | It cannot prove that 5.5 served the request or that effort was lowered |
+| `× Error` (red) | Request evidence explicitly conflicts, an explicit reroute violates policy, or collection has a deterministic fatal error | This is an evidence-backed conflict, not a style warning |
+| `– Idle` (gray) | Codex is not running or no turn is active | XiaoLi keeps waiting locally |
+| `↝ Server rerouted` | An explicit `model/rerouted` event was captured | This is XiaoLi's highest route-evidence level |
+| `! Rerouted, target unknown` | An explicit reroute was captured without a displayable target model | Confirms a route event only; XiaoLi does not guess the target |
+| `◇ No server reroute observed` | No explicit reroute was captured | It does not prove that physical routing did not change |
+| `⌁ Connection origin` | Provider, endpoint class, and auth mode form complete, partial, or conflicting evidence | Classifies configured origin only; it does not identify the physical backend |
+| `◷ Pending next turn` | Settings changed while a turn was active | The current request is not rewritten |
+| `◌ Learning X/30` | Too few healthy samples exist in the matching bucket | Learning alone is not an anomaly |
+| `● Collection healthy / warning / needs confirmation / failed / unavailable` | The collector reports its own parsing and runtime health | Collection status does not authenticate a server model |
+| `… Waiting for first segment / output / model segment` | Structured timing or token data is not yet sufficient for the metric | A waiting metric is not zero and is not an anomaly by itself |
+| `↻ Refreshing / coalesced / timed out / failed` | Background refresh interaction state | The last valid snapshot is retained; this is not a server-model conclusion |
 
-![小狸主监视器状态说明，展示正常、待确认、疑似降质、异常、空闲、刷新、连接来源以及已重路由目标未知](docs/assets/status-guide.png)
+### Relay-audit states
 
-![小狸工作台检测原理页，逐项展示 qualityAssessment 三种状态、overallVerdict 八种总裁决、连接来源和路由证据](docs/assets/workbench-status-guide.png)
+| Display | Meaning | Important limit |
+| --- | --- | --- |
+| Green · consistent with reference | No significant anomaly within this run and its matched reference conditions | Not a physical-model certificate |
+| Yellow · suspected padding/degradation/significant difference | Conservative multi-scale, multi-domain, or distribution thresholds were crossed | A reproducible suspicion, not proof of intent or a named replacement model |
+| Yellow · anti-evasion behavior anomaly | In standard/deep mode, at least two of response-distribution collapse, unusually low/stable latency, paraphrase drift, and role/format sensitivity persist across both independent batches | Independent behavior evidence only; it never changes the four axes, overall verdict, or model identity |
+| Yellow · suspected selective service | A consistent active audit conflicts with enough conservative degradation warnings from recent real turns bound to the same local profile | This is an independent statistical mismatch; it does not change the four axes or prove selective routing |
+| Red · confirmed contract mismatch | Reproducible impossible usage arithmetic, a wrong self-reported model, or a stable declared protocol contradiction | Establishes a contract contradiction, not the backend's identity |
+| Red · audit failed | No operation produced a parseable successful response, or the audit worker failed deterministically | No model-identity conclusion was formed |
+| Gray · cancelled | The user cancelled; no new request is started | Completed structured evidence may remain, but the run is not a pass |
+| Gray · insufficient evidence | Missing samples, no applicable reference, uncontrollable parameters, or an unsupported check | Gray is not a pass |
 
-主监视器内也有第一张图对应的说明：展开小狸，打开 `…`，选择“状态与证据说明”。工作台的“检测原理”页提供第二张图对应的中转审计状态说明。
+The same guide is built into the workbench under **Method and status**.
 
-## 便携版快速开始
+## Origin classification and automatic mode
+
+`MonitorSnapshotV5` adds `connectionOrigin` to every conversation. Evidence precedence is the conversation's `session_meta.model_provider`, effective Codex provider/base URL, a sanitized hook endpoint class, and authentication mode parsed without retaining credential fields.
+
+- “Official ChatGPT” or “official API” appears only when a first-party endpoint and matching authentication mode both agree.
+- A custom or local endpoint means “eligible for relay testing,” not “malicious relay.”
+- Conflicting CLI/environment/configuration evidence produces `unknown`; XiaoLi never guesses origin from speed, style, or token behavior.
+- Official login stays in passive Codex-monitor mode. A custom endpoint still requires a separately saved `RelayProfile`, the user's own credential, and explicit budget confirmation before any active request.
+
+## Active-audit budgets
+
+| Mode | Scope | Hard request limit per endpoint |
+| --- | --- | ---: |
+| Connection | Authentication, target model catalog, basic non-streaming response, SSE | 6 (currently normally 3) |
+| Quick | 8 cells × 15, small samples in all six quality domains, plus basic protocol/usage checks | 150 |
+| Standard | 16 cells × 15, more samples in all six quality domains, plus full distribution comparison | 320 |
+| Deep | 40 cells × 15, higher sample counts in all six quality domains, plus the stability matrix | 720 |
+
+The UI displays request, input-token, output-token, and timeout caps before starting. A paired official comparison costs additional requests and requires a separately configured first-party profile with the same protocol and exact model plus its own credential. Without live pairing, XiaoLi can still check protocol behavior and usage arithmetic and collect six target-side deterministic probe domains; relative quality stays learning/insufficient. Model identity also stays **insufficient evidence** unless the user explicitly selects a verified, matching, unexpired signed static package. Such a package provides only a low-confidence `referenceConsistent` / `referenceDifferent` comparison: a consistent result cannot by itself make the overall verdict consistent and never proves the physical serving model. Imported summary metadata is never substituted for either a live pair or a verified scorer package. Network attempts count against the cap.
+
+An endpoint profile may optionally reference a local private probe-pack JSON file. XiaoLi persists only its canonical path, version, and SHA-256; task prompts and expected answers are read ephemerally at audit start. A missing or changed file fails before any network request. The confirmation dialog shows the pack's additional per-endpoint requests and conservative token allowance. Built-in and private cases are never silently truncated: if the complete randomized plan exceeds any confirmed hard cap, the audit refuses to start. See the strict schema and limits in the [relay-audit method](docs/RELAY_AUDIT.md#user-private-probe-pack).
+
+Quick mode collects a small number of quality samples to exercise the path, but it does not have enough samples to issue a quality-consistent or degradation verdict; that axis remains learning. Standard and Deep are the modes that run the paired quality comparison at the current evidence threshold. The input preview uses the largest real wire-body reservation across every generatable randomized variant, so the reservation for the eventual CSPRNG seed can only be lower or equal. A future `runSeed` is not exposed before execution; the completed report retains it for local review. A non-localhost plaintext HTTP endpoint is allowed only for a manual connection test or audit after a per-run interception warning; scheduled audits reject it. HTTPS and localhost do not require that extra warning.
+
+Scheduled audits are off by default. Enabling them requires an explicitly bound profile and persistent OS credential, uses Quick mode, applies a local ±30-minute jitter, and obeys a monthly request ceiling. Official pairing is a separate opt-in.
+
+## Anti-evasion and prompt-injection boundary
+
+Every run receives an operating-system CSPRNG seed. XiaoLi randomizes task parameters, wording, language, whitespace, and request order; fixed final prompts are not stored in the repository. It also compares original and rephrased audit cases.
+
+For a custom, managed, or local endpoint, XiaoLi can conservatively bind a real Codex turn to exactly one saved local `RelayProfile` when the turn-bound endpoint class and private endpoint-scope fingerprint agree. That scope is the normalized scheme, host, effective port, and API base path; it excludes userinfo, query, and fragment, so different ports or API paths on one host are not treated as the same relay. The fingerprint is never exposed or persisted. Only after an active audit is consistent with its matched live reference does XiaoLi compare the profile's completed real turns from the previous 30 days. It displays an independent yellow **suspected selective service** warning only with at least 10 completed turns and when at least 5, and at least half, retain a conservative degradation warning. This comparison never changes the four axes or overall verdict and cannot prove selective routing or a physical model identity.
+
+Relay output is untrusted data:
+
+- Responses cannot execute tools, code, commands, HTML, scripts, URLs, or “instructions for the detector.”
+- HTTP redirects are disabled, and credentials stay bound to the origin the user confirmed.
+- JSON/SSE event size, total response size, depth, and retained strings are bounded.
+- The UI renders untrusted values as text, not HTML.
+- Relay observations, live official-pair results, unverified imported metadata, trusted signed packages, and release-pinned community distributions stay logically and physically separate. Only a user-selected verified/matching/unexpired signed package can enter the low-confidence static fingerprint scorer; built-in cross-protocol distributions still cannot change the four axes or overall verdict.
+
+A relay that recognizes all audit traffic through TLS or traffic shape can selectively forward an honest model. No black-box client can rule that out. XiaoLi raises the cost of evasion and preserves reproducible evidence; it does not promise an unbypassable proof.
+
+## Portable setup
 
 ### Windows 10/11 x64
 
-1. 从 [Releases](https://github.com/XuYing1128/XiaoLi/releases) 下载 `XiaoLi-v0.2.0-beta.1-Windows-x64-portable.zip`。
-2. 将压缩包解压到一个长期保留的父目录，例如 `D:\Apps`。压缩包自带顶级 `XiaoLi` 文件夹。
-3. 双击 `D:\Apps\XiaoLi\XiaoLi.exe`。首次启动会为当前用户写入或修复 Codex 插件路径，不需要管理员权限和 Node.js。
-4. 在 Codex 中打开 `/hooks`，审阅并信任 `xiaoli-model-monitor` 的本地 hook。插件配置不会绕过 Codex 的 hook 信任确认。
-5. 如果 Codex 在安装前已经运行，请新建任务或重启 Codex 后再开始回合。小狸会从托盘出现紧凑卡片。
+1. Download `XiaoLi-v0.2.0-beta.1-Windows-x64-portable.zip` from [Releases](https://github.com/Xiao-Xiao-hub/XiaoLi/releases).
+2. Extract it into a permanent parent folder such as `D:\Apps`; the archive already contains a top-level `XiaoLi` directory.
+3. Run `D:\Apps\XiaoLi\XiaoLi.exe`.
+4. The GUI writes or repairs the current-user Codex plugin path without Node.js or administrator access.
+5. Open `/hooks` in Codex, review the local `xiaoli-model-monitor` hook, and explicitly trust it.
 
-未签名的新程序可能触发 Windows SmartScreen。请先核对 Release 的 SHA-256，再使用系统提供的“更多信息”流程确认运行；项目不会要求关闭 SmartScreen。
+This unsigned beta may trigger SmartScreen. Verify `SHA256SUMS.txt` and use Windows' normal **More info** flow. XiaoLi never asks you to disable SmartScreen.
 
-### macOS 12+，Intel 与 Apple Silicon
+### macOS 12+, Intel and Apple Silicon
 
-1. 下载并解压 `XiaoLi-v0.2.0-beta.1-macOS-universal.app.zip`。
-2. 将 `XiaoLi.app` 移到“应用程序”，然后打开。
-3. 首个 beta 采用 ad-hoc 签名、未公证。如果 Gatekeeper 阻止启动，请在“系统设置 → 隐私与安全性”中核对应用后选择“仍要打开”。
+Extract `XiaoLi-v0.2.0-beta.1-macOS-universal.app.zip`, move `XiaoLi.app` to Applications, and open it. The beta is ad-hoc signed but not notarized. If Gatekeeper blocks it, verify the checksum and use Privacy & Security's **Open Anyway** control. Do not disable Gatekeeper.
 
 ### Linux x64
 
-1. 下载 `XiaoLi-v0.2.0-beta.1-Linux-x64-portable.tar.gz`，或下载包含 AppImage 的 `XiaoLi-v0.2.0-beta.1-Linux-x64-portable.zip`。
-2. 如果使用 ZIP，解压后只需赋予 AppImage 一次执行权限：
+Extract `XiaoLi-v0.2.0-beta.1-Linux-x64-portable.tar.gz`, or extract `XiaoLi-v0.2.0-beta.1-Linux-x64-portable.zip` and grant the AppImage execute permission once:
 
-   ```bash
-   cd XiaoLi
-   chmod +x XiaoLi-x86_64.AppImage
-   ./XiaoLi-x86_64.AppImage
-   ```
+```bash
+cd XiaoLi
+chmod +x XiaoLi-x86_64.AppImage
+./XiaoLi-x86_64.AppImage
+```
 
-   如果系统缺少 FUSE，普通启动会明确失败；可使用 AppImage 自带的解包运行后备方式：
+If normal launch reports that FUSE is unavailable, use the AppImage's extraction fallback:
 
-   ```bash
-   ./XiaoLi-x86_64.AppImage --appimage-extract-and-run
-   ```
+```bash
+./XiaoLi-x86_64.AppImage --appimage-extract-and-run
+```
 
-Wayland 下置顶、托盘和绝对窗口位置取决于桌面合成器，属于 best effort；X11 支持更完整。
+Always-on-top, tray, and absolute positioning are best effort under Wayland and more complete under X11. If Secret Service is unavailable, credentials remain memory-only; XiaoLi never falls back to a plaintext key file.
 
-完整教程见 [快速开始](docs/GETTING_STARTED.md)。
+## Accuracy boundaries for Codex monitoring
 
-## 窗口与操作
+`activeRequest.model` and `activeRequest.effort` are request evidence. Effort is always labeled “requested”; reasoning tokens are usage, not a measurement of actual thinking intensity.
 
-- 紧凑态默认 `304 × 72 DIP`，可缩放到 `280 × 68` 至 `520 × 120`。
-- 展开态默认 `440 × 500 DIP`，可缩放到 `380 × 300` 至屏幕工作区 90% 内的 `760 × 800`。
-- 头像、模型行、Token 行、标题空白和六点抓手都可拖动窗口。
-- 根会话是折叠单位；展开后能看到所属子会话和子智能体。孤立子任务不会被静默丢弃。
-- `—` 隐藏到托盘；菜单“退出小狸”才会真正释放窗口、托盘、watcher 和单实例资源。
-- 可切换手绘二次元主题与极简主题。两种主题使用完全相同的证据层级。
-- 实时更新采用稳定 DOM 节点，不会把列表拉回顶部或打断键盘焦点。
+Only an explicit `model/rerouted` event creates route evidence. Timing, tokens, cache, and behavior may create a yellow warning, because latency, queuing, tools, cache, input shape, and system load are confounders.
 
-## 模型与思考程度的准确性边界
+An active TTFT is an estimated `A–B` window from structured model-item timing. Only a terminal structured report is labeled exact. End-to-end output rate includes waiting and tools; model-phase rate is an estimate over the union of Reasoning and AgentMessage intervals. Neither is pure server generation TPS.
 
-小狸能准确回答的是“这一回合请求了哪个模型和哪个 effort”，以及“是否捕获到明确服务器 reroute”。它不能从旁路日志独立证明数据中心最终使用的物理模型，也没有接口实测所谓“真实思考强度”。
+## Plugin, MCP, and CLI
 
-- `activeRequest.model` 与 `activeRequest.effort` 是请求证据。
-- effort 始终标记为“请求”。推理 Token 是实际用量，不是思考档位测量。
-- 只有明确的 `model/rerouted` 能生成服务器路由链。
-- 行为特征容易受网络、排队、工具调用、缓存、输入类型和系统负载影响，因此只允许生成黄色统计提醒。
-- `TTFT 约 A–B` 来自首个结构化模型片段的开始与完成时间；任一端都不是精确首 Token。只有终态结构化报告才标记精确 TTFT。
-- “端到端输出速率”包含排队、网络和工具等待；“模型阶段速率（估算）”只使用 Reasoning/AgentMessage 的结构化时间区间并集，两者都不是服务端纯生成 TPS。
-
-更完整的证据等级、算法门槛和示例见 [状态与证据](docs/STATUS_AND_EVIDENCE.md)。
-
-## 来源识别与自动模式
-
-`MonitorSnapshotV5` 为每个会话增加 `connectionOrigin`。小狸优先使用该会话的 `session_meta.model_provider`，再与 Codex 生效的 provider/base URL、经过脱敏的 hook endpoint 分类和只解析 `auth_mode` 的认证证据交叉验证。
-
-- 第一方 endpoint 与认证模式都匹配，才显示“官方 ChatGPT / 官方 API”。
-- 自定义或本地 endpoint 只标记“可进行中转检测”，不自动称为恶意中转。
-- 临时 CLI/环境覆盖与配置冲突时返回 `unknown`，不根据速度、文风或 Token 猜来源。
-- 官方登录只进行 Codex 被动监视；自定义 endpoint 也必须由用户保存独立 `RelayProfile`、提供自己的 Key 并确认预算后，才发起主动请求。
-
-## 主动审计预算
-
-| 档位 | 主要用途 | 单 endpoint 请求硬上限 |
-| --- | --- | ---: |
-| 连接测试 | 认证、目标模型目录、基础非流式响应、SSE | 6（当前通常使用 3 次） |
-| 快速 | 8 cells × 15，六质量域各少量采样，加基础协议/计量 | 150 |
-| 标准 | 16 cells × 15，六质量域提高每域样本量，加完整分布比较 | 320 |
-| 深度 | 40 cells × 15，六质量域的更高样本量与稳定性矩阵 | 720 |
-
-发起前会显示请求、输入 Token、输出 Token 和超时硬上限。随机探针的输入预览按全部可生成变体的真实 wire body 最大值计算，因此实际 seed 的发包前预留只能小于或等于该保守值；未来 `runSeed` 不会提前暴露，完成报告才保存它用于本地复核。官方配对会在用户明确配置同协议、同模型的第一方 profile 与独立凭据时产生额外请求。未启用实时官方配对时，小狸仍可检查协议与 usage 算术自洽，并采集目标端六类确定性探针；没有用户选择的适用签名基线时，相对质量与模型身份必须返回“学习中/证据不足”。适用的已验证签名包只提供低置信身份比较；一致结果不能单独把 `overallVerdict` 设为 `consistent`。定时审计默认关闭；启用后必须绑定 profile 和系统凭据，只使用快速档，在选定本地时间附近抖动 ±30 分钟，并受每次/每月请求硬上限保护。
-
-每个端点可选一个本地私有 probe pack。小狸只持久化规范化路径、版本和 SHA-256，任务正文只在审计启动时短暂读取；缺失或哈希变化会在任何请求前拒绝。确认框会单列题包增加的每端点请求数与保守 Token 额度。内置和私有任务不会被随机截断；完整计划超出任一已确认硬上限时审计不会启动。严格 schema 见 [中转审计方法](docs/RELAY_AUDIT.md#用户私有-probe-pack)。
-
-快速档会采集少量质量样本用于检查链路，但样本量不足以形成质量一致/降质裁决，因此质量轴保持学习中；标准档和深度档才执行满足当前质量门槛的配对比较。非本机明文 HTTP 端点只允许手动连接测试或审计，并且每次都要确认明文泄露风险；定时审计拒绝这类端点。HTTPS 和 localhost 不需要这条额外确认。
-
-## 疑似降质为什么很保守
-
-小狸按“请求模型 + 请求 effort + 未缓存输入量级 + 输出量级 + 是否使用工具”分桶。每桶至少需要 30 个完整、无解析警告、无显式 reroute 的健康回合。
-
-只有 TTFT 偏高、模型阶段速率偏低、推理输出占比偏低、推理阶段时长占比偏低这四类单向信号参与投票。至少两个独立信号超过历史中位数 `4 × MAD`，并在相隔至少 2 秒且输出增加至少 64 Token 的两个检查点连续命中，才会显示“疑似降质”。恢复也需要两个健康检查点。缓存输入比例只用于解释，不参与投票。
-
-即使本机有足够的 gpt-5.5 对照样本，小狸最多显示“行为统计上更接近本机 5.5 请求样本”，永远不会写成“实际模型是 5.5”。
-
-## 疑似选择性服务
-
-小狸可在不暴露 endpoint 作用域指纹的前提下，把真实 Codex 回合保守地绑定到唯一匹配的本地 `RelayProfile`。该作用域由规范化协议、主机、有效端口与 API 基础路径组成，不含 userinfo、query 或 fragment；因此同一主机上的不同端口或 API 路径不会被误当成同一中转。只有一次主动审计与实时匹配参考一致时，才查看该 profile 最近 30 天的已完成真实回合；至少 10 个样本，且至少 5 个、占比不低于一半仍保留保守降质警告，才独立显示黄色“疑似选择性服务”。
-
-该警告不会改写协议、计量、质量、身份四轴或总结论。真实会话的工具、缓存、输入分布和负载与主动探针不同，因此它只是需要复核的统计矛盾，不能证明中转进行了选择性路由，更不能识别物理模型。
-
-## 插件与对话内工具
-
-GUI 首次启动会在当前用户范围写入 `xiaoli-model-monitor` 配置。插件不需要 Node.js，所有入口都由同一个 Rust 可执行文件提供。首次安装、升级或移动程序后，仍须在 Codex `/hooks` 中审阅并信任新的 hook 命令；写入配置不等于 hook 已自动生效。
+The `xiaoli-model-monitor` plugin uses the same Rust executable, with no Node runtime:
 
 ```text
 xiaoli --hook-capture
@@ -201,44 +179,30 @@ xiaoli --install-plugin
 xiaoli --uninstall-plugin
 ```
 
-只读 MCP 工具：
-
-- `get_monitor_summary()`：全部活动根会话的紧凑状态。
-- `get_session_detail(threadId)`：指定根会话及子任务的完整证据。
-- `render_monitor_card(threadId?, theme?)`：在 Codex 对话内返回监视卡数据。
-- `get_connection_origin(threadId)`：返回指定活动线程经脱敏的连接来源证据；`threadId` 必填。
-- `list_relay_audits(limit?)` / `get_relay_audit(auditId)`：只读查看已有审计报告；MCP 不能启动会消耗额度的审计。
-
-MCP 当前状态只接受正在运行的小狸采集器通过 IPC 返回的数据，并标记 `snapshotSource: liveMonitorIpc`。小狸离线或 IPC 不可用时工具会明确报错，不会把磁盘旧快照冒充为实时模型。
-
-插件 hook 只发送事件类型、线程/回合 ID、请求模型和时间戳；请求 effort 由结构化 `turn_context` 提供。小狸不保存 prompt、回复正文或完整 cwd。详见 [插件与 CLI](docs/CLI_AND_PLUGIN.md)。
-
-## 本地数据与隐私
-
-| 平台 | 默认状态目录 |
-| --- | --- |
-| Windows | `%LOCALAPPDATA%\XiaoLi` |
-| macOS | `~/Library/Application Support/XiaoLi` |
-| Linux | `$XDG_DATA_HOME/xiaoli`，未设置时为 `~/.local/share/xiaoli` |
-
-SQLite 只保存派生游标、会话指标历史、聚合、参考元数据、本地信任公钥、经验证的规范化一词计数分布、经脱敏的 `RelayProfile` 和审计报告；原始 rollout 始终是真源。私有题包只额外保存用户选择的规范化本地路径、版本和 SHA-256，不复制题包正文。普通/未验证摘要不参与 scorer；可信签名包与中转样本分表，读取时重新验签并检查过期；内置社区参考只用于低置信相对排名，不保存或输出原始回复。API Key 默认只在进程内存，只有用户勾选时才进入 Windows Credential Manager、macOS Keychain 或 Linux Secret Service；凭据库不可用时退回内存，不明文落盘。日志、SQLite、报告和事件不保存 API Key、prompt、回复正文、完整 cwd 或完整 endpoint query。详见 [隐私说明](docs/PRIVACY.md)。
-
-## CLI
+Read-only MCP tools expose the active summary, session detail, monitor card, sanitized connection origin, and existing relay-audit reports. MCP cannot start a billable audit. Current-state results must come from the live XiaoLi collector over IPC and carry `snapshotSource: liveMonitorIpc`; an old disk snapshot is never presented as current.
 
 ```text
 xiaoli --probe-once [--sessions-root PATH] [--session-index PATH] [--state-root PATH]
 xiaoli --show
 xiaoli --hidden
 xiaoli --stop
-xiaoli --hook-capture
-xiaoli --mcp-server
-xiaoli --install-plugin
-xiaoli --uninstall-plugin
 ```
 
-`--probe-once` 输出稳定的 `MonitorSnapshotV5` JSON，不写生产日志或解析缓存。完整字段见 [CLI 与快照参考](docs/CLI_AND_PLUGIN.md)。
+`--probe-once` emits `MonitorSnapshotV5` without writing production logs or parse cache.
 
-## 开发与验证
+## Privacy and local data
+
+- Windows: `%LOCALAPPDATA%\XiaoLi`
+- macOS: `~/Library/Application Support/XiaoLi`
+- Linux: `$XDG_DATA_HOME/xiaoli` or `~/.local/share/xiaoli`
+
+SQLite stores rebuildable cursors, derived conversation metrics, aggregates, imported reference metadata, explicitly trusted public keys, verified normalized one-word count distributions, normalized relay profiles, and sanitized reports. A selected private probe pack contributes only its canonical local path, version, and SHA-256 to the profile/report; its body is not copied. Unverified summaries do not enter scoring. Trusted packages and relay samples use separate tables; packages are reverified and checked for expiry on load, and revoking a key removes its scoring packages. Release-pinned community distributions contain normalized counts only, not prompt/reply bodies. SQLite does not store API keys, authentication tokens, prompt/reply bodies, full working-directory paths, or raw relay responses.
+
+API keys are memory-only by default. Explicit opt-in uses Windows Credential Manager, macOS Keychain, or Linux Secret Service. If the OS credential store is unavailable, XiaoLi remains memory-only and shows a warning.
+
+See [Privacy](docs/PRIVACY.md) and [Relay-audit method](docs/RELAY_AUDIT.md).
+
+## Development
 
 ```powershell
 pnpm install --frozen-lockfile
@@ -249,20 +213,8 @@ cargo clippy --manifest-path .\src-tauri\Cargo.toml --all-targets --all-features
 cargo test --manifest-path .\src-tauri\Cargo.toml --locked
 ```
 
-更多内容：
+See [Getting started](docs/GETTING_STARTED.md), [CLI and plugin reference](docs/CLI_AND_PLUGIN.md), [Development](docs/DEVELOPMENT.md), [Contributing](CONTRIBUTING.md), [Troubleshooting](docs/TROUBLESHOOTING.md), [Design](DESIGN.md), [Security](SECURITY.md), [Third-party notices](THIRD_PARTY_NOTICES.md), [Release tooling](scripts/release/README.md), and [Changelog](CHANGELOG.md).
 
-- [开发指南](docs/DEVELOPMENT.md)
-- [贡献指南](CONTRIBUTING.md)
-- [故障排查](docs/TROUBLESHOOTING.md)
-- [变更记录](CHANGELOG.md)
-- [设计系统](DESIGN.md)
-- [角色素材来源与授权记录](ASSET_PROVENANCE.md)
-- [安全策略](SECURITY.md)
-- [第三方许可](THIRD_PARTY_NOTICES.md)
-- [便携发布工具](scripts/release/README.md)
+## License
 
-## 许可证
-
-小狸以 [PolyForm Noncommercial 1.0.0](LICENSE) 提供，允许个人、学习、研究以及许可证列出的非商业组织用途，不授权商业用途。因为包含非商业限制，本项目应称为“源码公开 / source-available”，不是 OSI 定义下的开源软件。
-
-角色与图标还受 [素材来源与分发声明](ASSET_PROVENANCE.md) 约束。第三方依赖继续遵循各自许可证。
+XiaoLi is source-available under [PolyForm Noncommercial 1.0.0](LICENSE). Commercial use is not licensed. Because of that restriction, XiaoLi is not “open source” under the OSI definition. Character assets also follow [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md); third-party dependencies retain their own licenses.

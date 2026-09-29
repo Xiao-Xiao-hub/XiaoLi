@@ -1,4 +1,4 @@
-# XiaoLi · 小狸
+# XiaoLi
 
 <p align="center">
   <img src="src/assets/mochi-app-icon.png" width="128" height="128" alt="XiaoLi mascot with purple-gray hair, a fox-cat mask, and looped ahoge" />
@@ -8,7 +8,7 @@
 
 > Current release: `v0.2.0-beta.1`. XiaoLi is an independent community project. It is not affiliated with or endorsed by OpenAI, Anthropic, or any model or relay provider. It is a beta-stage black-box and local-statistics tool and cannot guarantee error-free results.
 
-[中文](README.md) · [Portable downloads](https://github.com/XuYing1128/XiaoLi/releases) · [Workbench guide](docs/WORKBENCH.md) · [Relay-audit method](docs/RELAY_AUDIT.md) · [Signed static baselines](docs/SIGNED_BASELINES.md) · [Community references](docs/COMMUNITY_BASELINES.en.md) · [Evidence reference](docs/STATUS_AND_EVIDENCE.md)
+[Overview](README.md) · [Portable downloads](https://github.com/Xiao-Xiao-hub/XiaoLi/releases) · [Workbench guide](docs/WORKBENCH.md) · [Relay-audit method](docs/RELAY_AUDIT.md) · [Signed static baselines](docs/SIGNED_BASELINES.md) · [Community references](docs/COMMUNITY_BASELINES.en.md) · [Evidence reference](docs/STATUS_AND_EVIDENCE.md)
 
 ## What XiaoLi can verify
 
@@ -104,7 +104,7 @@ The same guide is built into the workbench under **Method and status**.
 
 The UI displays request, input-token, output-token, and timeout caps before starting. A paired official comparison costs additional requests and requires a separately configured first-party profile with the same protocol and exact model plus its own credential. Without live pairing, XiaoLi can still check protocol behavior and usage arithmetic and collect six target-side deterministic probe domains; relative quality stays learning/insufficient. Model identity also stays **insufficient evidence** unless the user explicitly selects a verified, matching, unexpired signed static package. Such a package provides only a low-confidence `referenceConsistent` / `referenceDifferent` comparison: a consistent result cannot by itself make the overall verdict consistent and never proves the physical serving model. Imported summary metadata is never substituted for either a live pair or a verified scorer package. Network attempts count against the cap.
 
-An endpoint profile may optionally reference a local private probe-pack JSON file. XiaoLi persists only its canonical path, version, and SHA-256; task prompts and expected answers are read ephemerally at audit start. A missing or changed file fails before any network request. The confirmation dialog shows the pack's additional per-endpoint requests and conservative token allowance. Built-in and private cases are never silently truncated: if the complete randomized plan exceeds any confirmed hard cap, the audit refuses to start. See the strict schema and limits in the [relay-audit method](docs/RELAY_AUDIT.md#用户私有-probe-pack).
+An endpoint profile may optionally reference a local private probe-pack JSON file. XiaoLi persists only its canonical path, version, and SHA-256; task prompts and expected answers are read ephemerally at audit start. A missing or changed file fails before any network request. The confirmation dialog shows the pack's additional per-endpoint requests and conservative token allowance. Built-in and private cases are never silently truncated: if the complete randomized plan exceeds any confirmed hard cap, the audit refuses to start. See the strict schema and limits in the [relay-audit method](docs/RELAY_AUDIT.md#user-private-probe-pack).
 
 Quick mode collects a small number of quality samples to exercise the path, but it does not have enough samples to issue a quality-consistent or degradation verdict; that axis remains learning. Standard and Deep are the modes that run the paired quality comparison at the current evidence threshold. The input preview uses the largest real wire-body reservation across every generatable randomized variant, so the reservation for the eventual CSPRNG seed can only be lower or equal. A future `runSeed` is not exposed before execution; the completed report retains it for local review. A non-localhost plaintext HTTP endpoint is allowed only for a manual connection test or audit after a per-run interception warning; scheduled audits reject it. HTTPS and localhost do not require that extra warning.
 
@@ -130,7 +130,7 @@ A relay that recognizes all audit traffic through TLS or traffic shape can selec
 
 ### Windows 10/11 x64
 
-1. Download `XiaoLi-v0.2.0-beta.1-Windows-x64-portable.zip` from [Releases](https://github.com/XuYing1128/XiaoLi/releases).
+1. Download `XiaoLi-v0.2.0-beta.1-Windows-x64-portable.zip` from [Releases](https://github.com/Xiao-Xiao-hub/XiaoLi/releases).
 2. Extract it into a permanent parent folder such as `D:\Apps`; the archive already contains a top-level `XiaoLi` directory.
 3. Run `D:\Apps\XiaoLi\XiaoLi.exe`.
 4. The GUI writes or repairs the current-user Codex plugin path without Node.js or administrator access.

@@ -1,26 +1,26 @@
-# 社区参考基线
+# Community reference baselines
 
-小狸在没有匹配官方 API Key 时，可以把本次单 token 探针的规范化分布与发行版内固定的公开参考表做比较。这个比较的目标是提供一个可复核的低置信度方向，不是替代实时官方配对，也不是证明服务器上的物理模型。
+When no matched official API key is available, XiaoLi can compare the normalized distribution from the current one-token probes with release-pinned public reference tables. This is a low-confidence, reproducible direction—not a substitute for a live official pairing and not proof of the physical serving model.
 
-## v0.2.0-beta.1 内置参考
+## References included in v0.2.0-beta.1
 
-| 参考 | 来源 | 采集条件 | 可用结论 |
+| Reference | Source | Collection conditions | Permitted conclusion |
 | --- | --- | --- | --- |
-| GPT-5.6 Sol / Terra | [`fpverify`](https://github.com/Mohamed7415/fpverify)，固定 commit `bcd60d955c92efdc6419a628f10de07a6d123ee5` | 2026-07，Cursor agent harness，11 个独立实例/格 | 仅显示跨协议相对距离与排序 |
-| GPT-5.5 | [`llm-fingerprint`](https://github.com/dreamor/llm-fingerprint)，固定 commit `133d40c117980b5c52d0873b8e25d5cc7616e043` | 2026-07-21，OpenRouter 单题协议，30 个有效样本/格 | 仅显示跨提示协议相对距离与排序 |
+| GPT-5.6 Sol / Terra | [`fpverify`](https://github.com/Mohamed7415/fpverify), pinned commit `bcd60d955c92efdc6419a628f10de07a6d123ee5` | July 2026, Cursor agent harness, 11 independent instances per cell | Cross-protocol relative distance and ranking only |
+| GPT-5.5 | [`llm-fingerprint`](https://github.com/dreamor/llm-fingerprint), pinned commit `133d40c117980b5c52d0873b8e25d5cc7616e043` | 2026-07-21, OpenRouter single-question protocol, 30 valid samples per cell | Cross-prompt-protocol relative distance and ranking only |
 
-小狸只包含与自己的探针域可以明确映射的规范化计数，不包含 API Key、原始响应正文或上游网络客户端。完整版权与许可说明见 [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md)。
+XiaoLi includes only normalized counts from cells that can be mapped unambiguously to its own probe domains. It includes no API key, raw response body, or upstream network client. See [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) for attribution and licenses.
 
-## 为什么只能低置信度
+## Why confidence stays low
 
-- 指纹取决于模型、采样参数、system prompt、API surface、供应商部署、时间和请求协议。
-- Sol/Terra 表来自代理环境中的整套题协议，小狸则向 API 发送彼此独立且随机改写的单题请求。
-- GPT-5.5 表虽然来自 API 单题采样，但固定题面与小狸的随机改写不完全相同。
-- 公开题库可能被中转识别；中转如果对审计请求选择性提供真模型，黑盒工具无法排除这种规避。
-- 模型更新和部署漂移会让旧参考失效。报告必须显示采集时间、来源 commit、共同格数量和协议不匹配。
+- A fingerprint is conditional on the model, sampling parameters, system prompt, API surface, deployment, date, and request protocol.
+- The Sol/Terra references were collected as a battery inside an agent harness; XiaoLi sends randomized independent API requests.
+- The GPT-5.5 reference used single API questions, but its fixed prompts are not identical to XiaoLi's randomized paraphrases.
+- A relay may recognize a public audit and selectively provide the genuine model.
+- Provider updates and deployment drift can invalidate an older reference.
 
-因此，社区表不会单独把总结果设为 `consistent`、`significantlyDifferent` 或“实际模型为 X”。界面只能使用“实验性地更接近某参考”或“样本不足”这类文案，并始终保留“物理模型未获证明”。
+The report therefore preserves source commit, collection date, shared-cell count, sample count, and protocol mismatch. Community data alone cannot set the overall verdict to `consistent` or `significantlyDifferent`, and XiaoLi never turns its closest match into “actual model X”.
 
-## 更强的验证方式
+## Stronger evidence
 
-对有争议或高价值的检查，使用同一时间、同一协议、同一精确模型与参数的官方 API 配对。小狸随机交错官方和中转请求，再计算逐格 JSD 与字符串 kernel MMD。即使官方配对通过，也仍然只能说明本次黑盒观测与参考一致，不能提供密码学身份证明。
+For consequential checks, pair the relay with the official API at the same time, using the same exact model, parameters, API surface, and probes. XiaoLi randomly interleaves official and relay requests and then computes per-cell JSD and string-kernel MMD. Even a passing official pair only means that this black-box run was behaviorally consistent with its reference; it is not cryptographic identity proof.

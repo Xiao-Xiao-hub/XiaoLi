@@ -3,9 +3,9 @@
   "private": true,
   "version": "0.2.0-beta.1",
   "description": "Evidence-aware Codex model, token, cache and timing monitor",
-  "author": "XuYing1128",
+  "author": "Xiao-Xiao-hub",
   "license": "PolyForm-Noncommercial-1.0.0",
-  "repository": "https://github.com/XuYing1128/XiaoLi",
+  "repository": "https://github.com/Xiao-Xiao-hub/XiaoLi",
   "type": "module",
   "scripts": {
     "dev": "vite",
