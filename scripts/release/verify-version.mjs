@@ -37,7 +37,7 @@ for (const [source, license] of Object.entries({
 if (
   tauri.productName !== "XiaoLi" ||
   tauri.identifier !== "io.github.xuying1128.xiaoli" ||
-  tauri.bundle?.publisher !== "XuYing1128"
+  tauri.bundle?.publisher !== "Xiao-Xiao-hub"
 ) {
   throw new Error("Tauri product, bundle identifier, or publisher metadata is inconsistent");
 }
