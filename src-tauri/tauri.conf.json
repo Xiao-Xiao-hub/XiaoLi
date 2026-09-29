@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "XiaoLi",
+        "title": "小狸 · XiaoLi",
         "width": 304,
         "height": 72,
         "minWidth": 280,
@@ -34,7 +34,7 @@
       },
       {
         "label": "workbench",
-        "title": "XiaoLi Workbench",
+        "title": "小狸工作台 · XiaoLi",
         "url": "workbench.html",
         "width": 1180,
         "height": 760,
@@ -58,7 +58,7 @@
   "bundle": {
     "active": true,
     "targets": [],
-    "publisher": "Xiao-Xiao-hub",
+    "publisher": "XuYing1128",
     "shortDescription": "Evidence-aware Codex model, token, cache and timing monitor",
     "longDescription": "XiaoLi is a compact source-available companion that distinguishes Codex request settings, explicit server reroute evidence and conservative local behavior signals.",
     "licenseFile": "../LICENSE",
